@@ -1,53 +1,160 @@
-# hellovm-localAI-NPU
-This is a local AI platform supports Intel Ultra series NPU, with loads of AI models, and fuctions of chat, text2image, text2video and so on
-# 本地AI问答平台系统
+# LLM Interaction Platform
 
-一个功能完善的本地AI问答平台，支持NPU和GPU硬件加速，提供友好的用户界面和强大的模型管理功能。
+A comprehensive LLM interaction platform with hardware acceleration support, multilingual interface, and advanced model management capabilities.
 
-## 功能特点
+## Features
 
-- 🚀 硬件加速：支持Ultra系列CPU自带NPU和GPU的协同加速
-- 🎨 响应式UI：直观友好的用户界面，支持多种设备
-- 🤖 模型管理：多模型集成管理，支持动态切换
-- 💬 智能问答：基于上下文的智能对话功能
-- ⚡ 模型量化：支持模型NPU量化，提升推理性能
-- 📦 绿色部署：一键打包，无需额外环境配置
+- 🚀 **Multi-Hardware Acceleration**: Support for CPU, iGPU, NPU, and GPU acceleration
+- 🌍 **Multilingual Interface**: Chinese and English language support
+- 🤖 **Model Management**: Download, quantize, and manage LLM models
+- 📊 **System Monitoring**: Real-time hardware utilization and performance metrics
+- 🔌 **Plugin Architecture**: Extensible plugin system for future enhancements
+- ⚡ **High Performance**: Optimized inference with hardware-specific backends
 
-## 系统要求
-
-- Python 3.13+
-- OpenVINO 2025.3+
-- Intel NPU Acceleration Library
-- 支持NPU的Intel CPU (Ultra系列)
-
-## 快速开始
-
-1. 克隆项目
-2. 安装依赖：`pip install -r requirements.txt`
-3. 运行应用：`python main.py`
-
-## 项目结构
+## Architecture
 
 ```
-ai_qa_platform/
-├── app/                    # 应用主目录
-│   ├── core/              # 核心功能模块
-│   ├── hardware/          # 硬件加速模块
-│   ├── models/            # 模型管理模块
-│   ├── ui/                # 用户界面模块
-│   └── utils/             # 工具函数
-├── assets/                # 静态资源
-├── config/                # 配置文件
-├── docs/                  # 文档
-├── models/                # 模型文件存储
-├── requirements.txt       # 依赖列表
-└── main.py               # 应用入口
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React Web UI  │    │  Electron App   │    │  Python Backend │
+│  (Chinese/EN)   │◄──►│   (Desktop)     │◄──►│  (FastAPI)      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │                         │
+                                ▼                         ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │   Hardware      │    │   Model         │
+                       │   Detection     │    │   Management    │
+                       └─────────────────┘    └─────────────────┘
 ```
 
-## 技术文档
+## Quick Start
 
-详细的技术文档请参考 [docs/](docs/) 目录。
+### Prerequisites
 
-## 许可证
+- Python 3.10+ (Embedded environment provided)
+- Node.js 18+ (for development)
+- 8GB+ RAM recommended
+- Supported hardware: Intel CPU/GPU, NVIDIA GPU, Intel NPU
 
-MIT License
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd llm-interaction-platform
+   ```
+
+2. **Set up Python environment**
+   ```bash
+   # Use the provided embedded Python
+   python/python.exe -m pip install -r requirements.txt
+   ```
+
+3. **Start the application**
+   ```bash
+   python/python.exe main.py
+   ```
+
+### Development
+
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+pytest tests/
+
+# Start development server
+python main.py --dev
+```
+
+## Hardware Support
+
+### CPU Acceleration
+- Intel AVX-512 optimization
+- Multi-threading support
+- Memory-mapped model loading
+
+### GPU Acceleration
+- NVIDIA CUDA support
+- Intel Arc GPU support
+- OpenVINO optimization
+
+### NPU Acceleration
+- Intel Ultra NPU support
+- Dedicated AI inference engine
+- Ultra-low power consumption
+
+## Model Management
+
+### Supported Formats
+- GGUF (llama.cpp)
+- ONNX (OpenVINO)
+- PyTorch (transformers)
+- SafeTensors
+
+### Download Sources
+- ModelScope (Chinese models)
+- Hugging Face Hub
+- Local model files
+
+### Quantization Options
+- 4-bit integer (INT4)
+- 8-bit integer (INT8)
+- 16-bit floating point (FP16)
+- Dynamic quantization
+
+## API Documentation
+
+### Hardware Detection
+```http
+GET /api/hardware/detect
+```
+
+### Model Management
+```http
+GET    /api/models
+POST   /api/models/download
+DELETE /api/models/{id}
+```
+
+### Inference
+```http
+POST /api/inference/chat
+```
+
+## Configuration
+
+### Environment Variables
+```bash
+# Hardware configuration
+HARDWARE_PREFERENCE=auto  # auto, cpu, gpu, npu
+MAX_MEMORY_USAGE=0.8     # 80% of available memory
+
+# Model configuration
+DEFAULT_MODEL=qwen-7b-chat
+MODEL_CACHE_DIR=./models
+
+# Server configuration
+API_HOST=localhost
+API_PORT=8000
+WEB_UI_PORT=3000
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For issues and questions:
+- Create an issue on GitHub
+- Check the documentation
+- Review the troubleshooting guide

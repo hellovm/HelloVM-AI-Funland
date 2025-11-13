@@ -1,0 +1,49 @@
+# Core Framework
+fastapi==0.104.1
+uvicorn==0.24.0
+websockets==12.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# AI/ML Libraries
+torch==2.1.0
+transformers==4.35.0
+llama-cpp-python==0.2.20
+openvino==2023.2.0
+onnxruntime==1.16.3
+optimum==1.14.1
+
+# Model Management
+modelscope==1.9.5
+huggingface-hub==0.19.4
+safetensors==0.4.0
+
+# Hardware Acceleration
+intel-npu-acceleration-library==1.1.0
+numpy==1.24.3
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+sqlite3
+
+# System Monitoring
+psutil==5.9.6
+GPUtil==1.4.0
+py-cpuinfo==9.0.0
+
+# Web UI
+jinja2==3.1.2
+aiofiles==23.2.1
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0.1
+loguru==0.7.2
+httpx==0.25.2
+
+# Development
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+isort==5.12.0
