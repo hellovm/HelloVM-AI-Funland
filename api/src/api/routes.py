@@ -114,6 +114,62 @@ async def get_hardware_metrics(device_id: str):
         raise HTTPException(status_code=500, detail="Failed to get hardware metrics")
 
 
+# Hardware acceleration endpoints
+@router.get("/hardware/acceleration/performance")
+async def get_acceleration_performance():
+    """Get performance summary for all acceleration devices"""
+    if not hardware_service:
+        raise HTTPException(status_code=503, detail="Hardware service not available")
+        
+    try:
+        performance = hardware_service.get_acceleration_performance_summary()
+        return {
+            "success": True,
+            "data": performance
+        }
+    except Exception as e:
+        logger.error("Failed to get acceleration performance", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get acceleration performance")
+
+
+@router.post("/hardware/acceleration/benchmark")
+async def benchmark_acceleration_devices(model_path: str, iterations: int = 50):
+    """Benchmark all available acceleration devices with a model"""
+    if not hardware_service:
+        raise HTTPException(status_code=503, detail="Hardware service not available")
+        
+    try:
+        results = hardware_service.benchmark_acceleration_devices(model_path, iterations)
+        return {
+            "success": True,
+            "data": results
+        }
+    except Exception as e:
+        logger.error("Benchmark failed", model_path=model_path, error=str(e))
+        raise HTTPException(status_code=500, detail="Benchmark failed")
+
+
+@router.post("/hardware/acceleration/load-model")
+async def load_model_with_acceleration(model_path: str, device_preference: Optional[str] = None):
+    """Load a model with hardware acceleration"""
+    if not hardware_service:
+        raise HTTPException(status_code=503, detail="Hardware service not available")
+        
+    try:
+        result = await hardware_service.load_model_with_acceleration(model_path, device_preference)
+        return {
+            "success": True,
+            "data": {
+                "device": result["device"],
+                "accelerator": result["accelerator"].device_name,
+                "model_loaded": True
+            }
+        }
+    except Exception as e:
+        logger.error("Failed to load model with acceleration", model_path=model_path, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to load model with acceleration")
+
+
 # Model endpoints
 @router.get("/models")
 async def get_models():
@@ -214,6 +270,145 @@ async def search_models(query: str, limit: int = 10):
     except Exception as e:
         logger.error("Model search failed", query=query, error=str(e))
         raise HTTPException(status_code=500, detail="Model search failed")
+
+
+@router.post("/models/sync")
+async def sync_models(query: str = "llm gguf"):
+    """Sync models with Modelscope API"""
+    if not model_service:
+        raise HTTPException(status_code=503, detail="Model service not available")
+        
+    try:
+        new_models = await model_service.sync_with_modelscope(query)
+        return {
+            "success": True,
+            "data": {
+                "new_models": new_models,
+                "total_models": len(model_service.get_all_models())
+            }
+        }
+    except Exception as e:
+        logger.error("Model sync failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Model sync failed")
+
+
+@router.post("/models/{model_id}/download")
+async def download_model(model_id: str, quantization: str = "Q4_K_M", threads: int = 4):
+    """Download a model"""
+    if not model_service:
+        raise HTTPException(status_code=503, detail="Model service not available")
+        
+    try:
+        # Check if model exists
+        model = model_service.get_model(model_id)
+        if not model:
+            raise HTTPException(status_code=404, detail="Model not found")
+            
+        # Start download
+        task_id = await model_service.download_model(model_id, quantization, threads)
+        
+        return {
+            "success": True,
+            "data": {
+                "task_id": task_id,
+                "model_id": model_id,
+                "quantization": quantization,
+                "threads": threads
+            }
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Model download failed", model_id=model_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Model download failed")
+
+
+@router.get("/models/downloads")
+async def get_download_tasks():
+    """Get all download tasks"""
+    if not model_service:
+        raise HTTPException(status_code=503, detail="Model service not available")
+        
+    try:
+        tasks = model_service.get_all_download_tasks()
+        return {
+            "success": True,
+            "data": tasks
+        }
+    except Exception as e:
+        logger.error("Failed to get download tasks", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get download tasks")
+
+
+@router.get("/models/downloads/{task_id}")
+async def get_download_task(task_id: str):
+    """Get specific download task status"""
+    if not model_service:
+        raise HTTPException(status_code=503, detail="Model service not available")
+        
+    try:
+        task = model_service.get_download_status(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Download task not found")
+            
+        return {
+            "success": True,
+            "data": task
+        }
+    except Exception as e:
+        logger.error("Failed to get download task", task_id=task_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get download task")
+
+
+@router.post("/models/downloads/{task_id}/pause")
+async def pause_download(task_id: str):
+    """Pause a download task"""
+    if not model_service:
+        raise HTTPException(status_code=503, detail="Model service not available")
+        
+    try:
+        success = await model_service.pause_download(task_id)
+        return {
+            "success": success,
+            "data": {"task_id": task_id, "status": "paused" if success else "failed"}
+        }
+    except Exception as e:
+        logger.error("Failed to pause download", task_id=task_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to pause download")
+
+
+@router.post("/models/downloads/{task_id}/resume")
+async def resume_download(task_id: str):
+    """Resume a download task"""
+    if not model_service:
+        raise HTTPException(status_code=503, detail="Model service not available")
+        
+    try:
+        success = await model_service.resume_download(task_id)
+        return {
+            "success": success,
+            "data": {"task_id": task_id, "status": "resumed" if success else "failed"}
+        }
+    except Exception as e:
+        logger.error("Failed to resume download", task_id=task_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to resume download")
+
+
+@router.post("/models/downloads/{task_id}/cancel")
+async def cancel_download(task_id: str):
+    """Cancel a download task"""
+    if not model_service:
+        raise HTTPException(status_code=503, detail="Model service not available")
+        
+    try:
+        success = await model_service.cancel_download(task_id)
+        return {
+            "success": success,
+            "data": {"task_id": task_id, "status": "cancelled" if success else "failed"}
+        }
+    except Exception as e:
+        logger.error("Failed to cancel download", task_id=task_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to cancel download")
 
 
 # Chat endpoints

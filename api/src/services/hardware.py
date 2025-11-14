@@ -43,6 +43,7 @@ except ImportError:
 
 from ..core.config import settings
 from ..core.logging import get_logger
+from .acceleration_manager import HardwareAccelerationManager, AccelerationConfig
 
 logger = get_logger(__name__)
 
@@ -85,11 +86,16 @@ class HardwareService:
         self.last_scan: Optional[datetime] = None
         self._scanning: bool = False
         self._stop_event: Optional[asyncio.Event] = None
+        self.acceleration_manager: Optional[HardwareAccelerationManager] = None
         
     async def start_detection(self):
         """Start hardware detection service"""
         logger.info("Starting hardware detection service")
         self._stop_event = asyncio.Event()
+        
+        # Initialize hardware acceleration manager
+        self.acceleration_manager = HardwareAccelerationManager()
+        await self.acceleration_manager.initialize()
         
         # Initial scan
         await self.scan_hardware()
@@ -102,6 +108,10 @@ class HardwareService:
         logger.info("Stopping hardware detection service")
         if self._stop_event:
             self._stop_event.set()
+            
+        # Cleanup acceleration manager
+        if self.acceleration_manager:
+            self.acceleration_manager.cleanup()
             
     async def _periodic_scan(self):
         """Periodic hardware scanning"""
@@ -359,6 +369,34 @@ class HardwareService:
             logger.info("Acceleration mode set", mode=mode)
             return True
         return False
+        
+    async def load_model_with_acceleration(self, model_path: str, device_preference: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """Load a model with hardware acceleration"""
+        if not self.acceleration_manager:
+            raise RuntimeError("Hardware acceleration manager not initialized")
+            
+        return await self.acceleration_manager.load_model(model_path, device_preference, **kwargs)
+        
+    async def run_inference_with_acceleration(self, model_info: Dict[str, Any], input_data: Any, **kwargs) -> Any:
+        """Run inference with hardware acceleration"""
+        if not self.acceleration_manager:
+            raise RuntimeError("Hardware acceleration manager not initialized")
+            
+        return await self.acceleration_manager.infer(model_info, input_data, **kwargs)
+        
+    def get_acceleration_performance_summary(self) -> Dict[str, Any]:
+        """Get performance summary for all acceleration devices"""
+        if not self.acceleration_manager:
+            return {"error": "Hardware acceleration manager not initialized"}
+            
+        return self.acceleration_manager.get_performance_summary()
+        
+    def benchmark_acceleration_devices(self, model_path: str, iterations: int = 50) -> Dict[str, Any]:
+        """Benchmark all available acceleration devices"""
+        if not self.acceleration_manager:
+            return {"error": "Hardware acceleration manager not initialized"}
+            
+        return self.acceleration_manager.benchmark_devices(model_path, iterations)
         
     async def get_device_metrics(self, device_id: str) -> Optional[Dict[str, Any]]:
         """Get real-time metrics for a specific device"""
